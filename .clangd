@@ -17,7 +17,7 @@ CompileFlags:
     - /Fd*
     - /nologo
     - -TP
-    - -imsvc*
+    #- -imsvc*
     - /DWIN32
     - /D_WINDOWS
     - /EHsc
