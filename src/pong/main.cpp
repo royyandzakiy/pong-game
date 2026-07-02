@@ -14,6 +14,7 @@ auto main() -> int {
 		ClearBackground(BLACK);
 
 		DrawCircle(windowWidth / 2, windowHeight / 2, 20, WHITE);
+		DrawRectangle(0, 0, 25, 120, WHITE);
 		EndDrawing();
 	}
 
