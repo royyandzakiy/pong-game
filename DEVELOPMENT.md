@@ -1,0 +1,8 @@
+- blank screen
+- paddle
+- move ball
+- edge collisions
+- player paddle
+- cpu paddle with ai
+- paddle collision
+- scoring
