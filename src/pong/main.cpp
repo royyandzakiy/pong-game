@@ -5,33 +5,6 @@
 constexpr int windowWidth = 1280;
 constexpr int windowHeight = 800;
 
-struct Ball {
-	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y)
-		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y) {
-	}
-
-	void Draw() {
-		DrawCircle(x, y, radius, WHITE);
-	}
-
-	void Update() {
-		y += speed_y;
-		x += speed_x;
-
-		if (y + static_cast<int>(radius) >= GetScreenHeight() || y - static_cast<int>(radius) <= 0) {
-			speed_y *= -1;
-		}
-		if (x + static_cast<int>(radius) >= GetScreenWidth() || x - static_cast<int>(radius) <= 0) {
-			speed_x *= -1;
-		}
-	}
-
-  private:
-	float radius;
-	int x, y;
-	int speed_x, speed_y;
-};
-
 struct PlayerPaddle {};
 struct PcPaddle {};
 
@@ -57,12 +30,51 @@ template <typename T> struct Paddle {
 			if (y + h >= GetScreenHeight())
 				y = GetScreenHeight() - h;
 		} else if constexpr (std::is_same_v<T, PcPaddle>) {
-			// do nothing yet...
+			if (y + h / 2 > ball_y)
+				y -= speed;
+			if (y + h / 2 <= ball_y)
+				y += speed;
 		}
+	}
+
+	void Notify(int x, int y) {
+		ball_x = x;
+		ball_y = y;
 	}
 
   private:
 	int x, y, w, h, speed;
+	int ball_x{}, ball_y{};
+};
+
+struct Ball {
+	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y, Paddle<PcPaddle> *_observerPaddle)
+		: observerPaddle(_observerPaddle), radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y) {
+	}
+
+	void Draw() {
+		DrawCircle(x, y, radius, WHITE);
+	}
+
+	void Update() {
+		y += speed_y;
+		x += speed_x;
+
+		if (y + static_cast<int>(radius) >= GetScreenHeight() || y - static_cast<int>(radius) <= 0) {
+			speed_y *= -1;
+		}
+		if (x + static_cast<int>(radius) >= GetScreenWidth() || x - static_cast<int>(radius) <= 0) {
+			speed_x *= -1;
+		}
+
+		observerPaddle->Notify(x, y);
+	}
+
+  private:
+	Paddle<PcPaddle> *observerPaddle;
+	float radius;
+	int x, y;
+	int speed_x, speed_y;
 };
 
 auto main() -> int {
@@ -70,9 +82,9 @@ auto main() -> int {
 	InitWindow(windowWidth, windowHeight, "Pong Game!");
 	SetTargetFPS(60);
 
-	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7};
 	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
 	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
+	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, &pcPaddle};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
