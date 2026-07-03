@@ -23,18 +23,14 @@ template <typename T> struct Paddle {
 				y -= speed;
 			if (IsKeyDown(KEY_DOWN))
 				y += speed;
-
-			// limit movement
-			if (y <= 0)
-				y = 0;
-			if (y + h >= GetScreenHeight())
-				y = GetScreenHeight() - h;
 		} else if constexpr (std::is_same_v<T, PcPaddle>) {
 			if (y + h / 2 > ball_y)
 				y -= speed;
 			if (y + h / 2 <= ball_y)
 				y += speed;
 		}
+
+		limitMovement();
 	}
 
 	void Notify(int x, int y) {
@@ -45,6 +41,13 @@ template <typename T> struct Paddle {
   private:
 	int x, y, w, h, speed;
 	int ball_x{}, ball_y{};
+
+	void limitMovement() {
+		if (y <= 0)
+			y = 0;
+		if (y + h >= GetScreenHeight())
+			y = GetScreenHeight() - h;
+	}
 };
 
 struct Ball {
