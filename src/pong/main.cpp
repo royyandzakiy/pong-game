@@ -1,13 +1,14 @@
 #include <fmt/base.h>
 #include <raylib.h>
+#include <type_traits>
 
 constexpr int windowWidth = 1280;
 constexpr int windowHeight = 800;
 
 struct Ball {
-	int x, y;
-	int speed_x, speed_y;
-	float radius;
+	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y)
+		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y) {
+	}
 
 	void Draw() {
 		DrawCircle(x, y, radius, WHITE);
@@ -24,31 +25,67 @@ struct Ball {
 			speed_x *= -1;
 		}
 	}
+
+  private:
+	float radius;
+	int x, y;
+	int speed_x, speed_y;
 };
 
-Ball ball{};
+struct PlayerPaddle {};
+struct PcPaddle {};
+
+template <typename T> struct Paddle {
+	Paddle(int _x, int _y, int _w, int _h, int _speed) : x(_x), y(_y), w(_w), h(_h), speed(_speed) {
+	}
+
+	void Draw() {
+		DrawRectangle(x, y, w, h, WHITE);
+	}
+
+	void Update() {
+		if constexpr (std::is_same_v<T, PlayerPaddle>) {
+			// respond to keypresses
+			if (IsKeyDown(KEY_UP))
+				y -= speed;
+			if (IsKeyDown(KEY_DOWN))
+				y += speed;
+
+			// limit movement
+			if (y <= 0)
+				y = 0;
+			if (y + h >= GetScreenHeight())
+				y = GetScreenHeight() - h;
+		} else if constexpr (std::is_same_v<T, PcPaddle>) {
+			// do nothing yet...
+		}
+	}
+
+  private:
+	int x, y, w, h, speed;
+};
 
 auto main() -> int {
 	fmt::println("Hello, clangd + CMake!");
 	InitWindow(windowWidth, windowHeight, "Pong Game!");
 	SetTargetFPS(60);
 
-	ball.radius = 20;
-	ball.x = windowWidth / 2;
-	ball.y = windowHeight / 2;
-	ball.speed_x = 7;
-	ball.speed_y = 7;
+	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7};
+	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
+	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
 		ClearBackground(BLACK);
 
 		DrawLine(windowWidth / 2, 0, windowWidth / 2, windowHeight, WHITE);
-		// DrawCircle(windowWidth / 2, windowHeight / 2, 20, WHITE);
 		ball.Update();
+		playerPaddle.Update();
+		pcPaddle.Update();
+
 		ball.Draw();
-		DrawRectangle(10, windowHeight / 2 - 60, 25, 120, WHITE);
-		DrawRectangle(windowWidth - 35, windowHeight / 2 - 60, 25, 120, WHITE);
+		playerPaddle.Draw();
+		pcPaddle.Draw();
 		EndDrawing();
 	}
 
