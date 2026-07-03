@@ -10,22 +10,10 @@ CompileFlags:
   # clangd parses with its own clang; drop driver-mode flags it can choke on
   # when the DB was produced by clang-cl / MSVC.
   Remove:
-    # - -fno-omit-frame-pointer
-    # - -fsanitize=*
-    # - --analyze*
     - /Fo*
     - /Fd*
     - /nologo
     - -TP
-    # - /DWIN32
-    # - /D_WINDOWS
-    # - /EHsc
-    # - /O2
-    # - /Ob2
-    # - /MD
-    # - /W4
-    # - /permissive-
-    # - /utf-8
 
 Index:
   Background: Build          # keep the project index warm in the background
