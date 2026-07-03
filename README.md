@@ -1,6 +1,6 @@
-# Project Title
+# Pong Game
 
-Brief description
+A Pong Game made in Raylib with C++23
 
 ## Demo
 
@@ -29,3 +29,5 @@ Brief description
 (flow chart / sequence diagram, mermaid based)
 
 ## Notes
+
+Tutorial: https://www.youtube.com/watch?v=VLJlTaFvHo4
