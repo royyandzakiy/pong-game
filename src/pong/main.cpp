@@ -5,113 +5,129 @@
 
 constexpr float windowWidth = 1280;
 constexpr float windowHeight = 800;
-int cpuScore = 0;
-int playerScore = 0;
+int g_cpuScore = 0;
+int g_playerScore = 0;
 
 template <typename T> struct Paddle;
-
 template <typename TCallback> struct Ball {
-	Ball(float _x, float _y, float _radius, float _speed_x, float _speed_y, TCallback _callback)
-		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y), OnBallMovedCb(std::move(_callback)) {
+	Ball(float _posX, float _posY, float _radius, float _speedX, float _speedY, TCallback _callback)
+		: m_radius(_radius), m_posX(_posX), m_posY(_posY), m_speedX(_speedX), m_speedY(_speedY),
+		  m_onBallMovedCb(std::move(_callback)) {
 	}
 
 	void Draw() {
-		DrawCircle(static_cast<int>(x), static_cast<int>(y), radius, WHITE);
+		DrawCircle(static_cast<int>(m_posX), static_cast<int>(m_posY), m_radius, WHITE);
 	}
 
 	void Update() {
-		y += speed_y;
-		x += speed_x;
+		m_posY += m_speedY;
+		m_posX += m_speedX;
 
 		// wall collision
-		if (y + radius >= static_cast<float>(GetScreenHeight()) || y - radius <= 0) {
-			speed_y *= -1;
+		if (m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0) {
+			m_speedY *= -1;
 		}
-		if (x + radius >= static_cast<float>(GetScreenWidth())) {
-			cpuScore++;
+		if (m_posX + m_radius >= static_cast<float>(GetScreenWidth())) {
+			g_cpuScore++;
+			ResetBall();
+		}
+		if (m_posX - m_radius <= 0) {
+			g_playerScore++;
 			ResetBall();
 		}
 
-		if (x - radius <= 0) {
-			playerScore++;
-			ResetBall();
-		}
-
-		OnBallMovedCb(x, y, radius);
+		m_onBallMovedCb(m_posX, m_posY, m_radius);
 	}
 
 	template <typename TPaddle> void CheckCollide(Paddle<TPaddle> *paddle) {
-		bool isCollide =
-			CheckCollisionCircleRec(Vector2{.x = x, .y = y}, radius,
-									Rectangle{.x = paddle->x, .y = paddle->y, .width = paddle->w, .height = paddle->h});
+		bool isCollide = CheckCollisionCircleRec(Vector2{.x = m_posX, .y = m_posY}, m_radius,
+												 Rectangle{.x = paddle->GetPosX(),
+														   .y = paddle->GetPosY(),
+														   .width = paddle->GetWidth(),
+														   .height = paddle->GetHeight()});
 		if (isCollide) {
-			speed_x *= -1;
+			m_speedX *= -1;
 		}
 	}
 
 	void ResetBall() {
-		x = static_cast<float>(GetScreenWidth()) / 2;
-		y = static_cast<float>(GetScreenHeight()) / 2;
+		m_posX = static_cast<float>(GetScreenWidth()) / 2;
+		m_posY = static_cast<float>(GetScreenHeight()) / 2;
 
-		std::array<int, 2> speed_choices{-1, 1};
-		speed_x = static_cast<float>(speed_choices.at(GetRandomValue(0, 1)));
-		speed_y = static_cast<float>(speed_choices.at(GetRandomValue(0, 1)));
+		std::array<int, 2> speedChoices{-1, 1};
+		m_speedX = static_cast<float>(speedChoices.at(GetRandomValue(0, 1)));
+		m_speedY = static_cast<float>(speedChoices.at(GetRandomValue(0, 1)));
 	}
 
-	float radius;
-	float x, y;
-	float speed_x, speed_y;
-
   private:
-	TCallback OnBallMovedCb;
+	float m_radius;
+	float m_posX, m_posY;
+	float m_speedX, m_speedY;
+	TCallback m_onBallMovedCb;
 };
 
 struct PlayerPaddle {};
 struct PcPaddle {};
 
 template <typename T> struct Paddle {
-	Paddle(float _x, float _y, float _w, float _h, float _speed) : x(_x), y(_y), w(_w), h(_h), speed(_speed) {
+	Paddle(float _posX, float _posY, float _width, float _height, float _speed)
+		: m_posX(_posX), m_posY(_posY), m_width(_width), m_height(_height), m_speed(_speed) {
 	}
 
 	void Draw() {
-		DrawRectangle(x, y, w, h, WHITE);
+		DrawRectangle(static_cast<int>(m_posX), static_cast<int>(m_posY), static_cast<int>(m_width),
+					  static_cast<int>(m_height), WHITE);
 	}
 
 	void Update() {
 		if constexpr (std::is_same_v<T, PlayerPaddle>) {
 			// respond to keypresses
 			if (IsKeyDown(KEY_UP))
-				y -= speed;
+				m_posY -= m_speed;
 			if (IsKeyDown(KEY_DOWN))
-				y += speed;
+				m_posY += m_speed;
 		} else if constexpr (std::is_same_v<T, PcPaddle>) {
 			// follows center of the ball with the given speed
-			if (y + h / 2 > ball_y)
-				y -= speed;
-			if (y + h / 2 <= ball_y)
-				y += speed;
+			if (m_posY + m_height / 2 > m_ballPosY)
+				m_posY -= m_speed;
+			if (m_posY + m_height / 2 <= m_ballPosY)
+				m_posY += m_speed;
 		}
 
-		// call this window collision
-		limitMovement();
+		WindowCollision();
 	}
 
-	void Notify(float x, float y, float r) {
-		ball_x = x;
-		ball_y = y;
-		ball_r = r;
+	void Notify(float posX, float posY, float radius) {
+		m_ballPosX = posX;
+		m_ballPosY = posY;
+		m_ballRadius = radius;
 	}
 
-	float x, y, w, h, speed;
+	// Getters
+	[[nodiscard]] float GetPosX() const {
+		return m_posX;
+	}
+	[[nodiscard]] float GetPosY() const {
+		return m_posY;
+	}
+	[[nodiscard]] float GetWidth() const {
+		return m_width;
+	}
+	[[nodiscard]] float GetHeight() const {
+		return m_height;
+	}
 
   private:
-	float ball_x{}, ball_y{}, ball_r{};
+	float m_posX, m_posY;
+	float m_width, m_height;
+	float m_speed;
+	float m_ballPosX{}, m_ballPosY{}, m_ballRadius{};
 
-	void limitMovement() {
-		if (y <= 0)
-			y = 0;
-		if (y + h >= static_cast<float>(GetScreenHeight()))
-			y = static_cast<float>(GetScreenHeight()) - h;
+	void WindowCollision() {
+		if (m_posY <= 0)
+			m_posY = 0;
+		if (m_posY + m_height >= static_cast<float>(GetScreenHeight()))
+			m_posY = static_cast<float>(GetScreenHeight()) - m_height;
 	}
 };
 
@@ -145,8 +161,8 @@ auto main() -> int {
 		ball.Draw();
 		playerPaddle.Draw();
 		pcPaddle.Draw();
-		DrawText(TextFormat("%i", cpuScore), windowWidth / 4 - 20, 20, 80, WHITE);
-		DrawText(TextFormat("%i", playerScore), (windowWidth / 4) * 3 - 20, 20, 80, WHITE);
+		DrawText(TextFormat("%i", g_cpuScore), windowWidth / 4 - 20, 20, 80, WHITE);
+		DrawText(TextFormat("%i", g_playerScore), (windowWidth / 4) * 3 - 20, 20, 80, WHITE);
 		EndDrawing();
 	}
 
