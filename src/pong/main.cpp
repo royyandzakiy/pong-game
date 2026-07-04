@@ -1,4 +1,5 @@
 #include <array>
+#include <concepts>
 #include <fmt/base.h>
 #include <raylib.h>
 #include <type_traits>
@@ -135,6 +136,29 @@ template <typename T> struct Paddle {
 		if (m_posY + m_height >= static_cast<float>(GetScreenHeight()))
 			m_posY = static_cast<float>(GetScreenHeight()) - m_height;
 	}
+};
+
+template <typename T>
+concept PaddleLike = requires(T t) {
+	{ t.Draw() } -> std::same_as<void>;
+};
+
+// todo: move all logic inside this game class
+class Game {
+	template <PaddleLike T>
+	Game(Paddle<T> playerPaddle, Paddle<T> pcPaddle, Ball ball)
+		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(ball) {
+	}
+
+	void Run();
+
+  private:
+	Paddle<PlayerPaddle> m_playerPaddle;
+	Paddle<PcPaddle> m_pcPaddle;
+	Ball m_ball;
+
+	void Update_prv();
+	void Draw_prv();
 };
 
 auto main() -> int {
