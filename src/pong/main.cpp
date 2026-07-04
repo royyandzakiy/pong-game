@@ -16,12 +16,12 @@ constexpr float windowHeight{800};
 int g_cpuScore = 0;
 int g_playerScore = 0;
 
-constexpr Color BallColor{230, 247, 0, 255};
-constexpr Color PaddleColor{66, 10, 252, 255};
-constexpr Color BgColor{211, 218, 229, 255};	 // d3dae5
-constexpr Color BgLeftColor{225, 230, 239, 255}; // e1e6ef
-constexpr Color BgCircleColor{255, 255, 255, 255};
-constexpr Color ScoreColor{255, 255, 255, 255};
+constexpr Color BallColor{.r = 230, .g = 247, .b = 0, .a = 255};
+constexpr Color PaddleColor{.r = 66, .g = 10, .b = 252, .a = 255};
+constexpr Color BgColor{.r = 211, .g = 218, .b = 229, .a = 255};	 // d3dae5
+constexpr Color BgLeftColor{.r = 225, .g = 230, .b = 239, .a = 255}; // e1e6ef
+constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
+constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 
 template <typename T> struct Paddle;
 
