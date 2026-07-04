@@ -122,7 +122,7 @@ template <typename T> struct Paddle {
 		other.m_speed = 0;
 	}
 
-	Paddle &operator=(Paddle &&other) noexcept = delete;
+	Paddle &operator=(Paddle &) noexcept = delete;
 	Paddle(const Paddle &) noexcept = delete;
 	Paddle &operator=(const Paddle &) noexcept = delete;
 
