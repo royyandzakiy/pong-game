@@ -50,9 +50,9 @@ template <typename T> struct Paddle {
 	}
 };
 
-struct Ball {
-	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y, Paddle<PcPaddle> *_observerPaddle)
-		: observerPaddle(_observerPaddle), radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y) {
+template <typename TCallback> struct Ball {
+	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y, TCallback _callback)
+		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y), OnBallMoved(std::move(_callback)) {
 	}
 
 	void Draw() {
@@ -70,14 +70,14 @@ struct Ball {
 			speed_x *= -1;
 		}
 
-		observerPaddle->Notify(x, y);
+		OnBallMoved(x, y);
 	}
 
   private:
-	Paddle<PcPaddle> *observerPaddle;
 	float radius;
 	int x, y;
 	int speed_x, speed_y;
+	TCallback OnBallMoved;
 };
 
 auto main() -> int {
@@ -87,7 +87,8 @@ auto main() -> int {
 
 	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
 	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
-	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, &pcPaddle};
+	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, [&pcPaddle](int x, int y) {
+		pcPaddle.Notify(x, y); }};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
