@@ -1,4 +1,5 @@
-- score move to game
+- g_score move to game
+- re add ball move assignment (rule of 3)
 - use paddle like properly with static assert
   - enable swap player to left/right of screen
 
