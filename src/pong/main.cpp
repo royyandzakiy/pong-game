@@ -1,9 +1,12 @@
+#include <array>
 #include <fmt/base.h>
 #include <raylib.h>
 #include <type_traits>
 
 constexpr float windowWidth = 1280;
 constexpr float windowHeight = 800;
+int cpuScore = 0;
+int playerScore = 0;
 
 template <typename TCallback> struct Ball {
 	Ball(float _x, float _y, float _radius, float _speed_x, float _speed_y, TCallback _callback)
@@ -18,17 +21,32 @@ template <typename TCallback> struct Ball {
 		y += speed_y;
 		x += speed_x;
 
-    // wall collision
+		// wall collision
 		if (y + radius >= static_cast<float>(GetScreenHeight()) || y - radius <= 0) {
 			speed_y *= -1;
 		}
-		if (x + radius >= static_cast<float>(GetScreenWidth()) || x - radius <= 0) {
-			speed_x *= -1;
+		if (x + radius >= static_cast<float>(GetScreenWidth())) {
+			cpuScore++;
+			ResetBall();
 		}
 
-    // paddle collision
+		if (x - radius <= 0) {
+			playerScore++;
+			ResetBall();
+		}
+
+		// paddle collision
 
 		OnBallMovedCb(x, y, radius); // remove this
+	}
+
+	void ResetBall() {
+		x = static_cast<float>(GetScreenWidth()) / 2;
+		y = static_cast<float>(GetScreenHeight()) / 2;
+
+		std::array<int, 2> speed_choices{-1, 1};
+		speed_x = static_cast<float>(speed_choices.at(GetRandomValue(0, 1)));
+		speed_y = static_cast<float>(speed_choices.at(GetRandomValue(0, 1)));
 	}
 
 	float radius;
@@ -65,7 +83,7 @@ template <typename T> struct Paddle {
 				y += speed;
 		}
 
-    // call this window collision
+		// call this window collision
 		limitMovement();
 	}
 
@@ -76,7 +94,7 @@ template <typename T> struct Paddle {
 	}
 
 	bool IsHit() {
-    // this;should be owned by ball
+		// this;should be owned by ball
 		return CheckCollisionCircleRec(Vector2{.x = ball_x, .y = ball_y}, ball_r,
 									   Rectangle{.x = x, .y = y, .width = w, .height = h});
 	}
@@ -119,9 +137,12 @@ auto main() -> int {
 			ball.speed_x *= -1;
 		}
 
+		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, GREEN);
 		ball.Draw();
 		playerPaddle.Draw();
 		pcPaddle.Draw();
+		DrawText(TextFormat("%i", cpuScore), windowWidth / 4 - 20, 20, 80, WHITE);
+		DrawText(TextFormat("%i", playerScore), (windowWidth / 4) * 3 - 20, 20, 80, WHITE);
 		EndDrawing();
 	}
 
