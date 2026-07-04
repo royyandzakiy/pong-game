@@ -2,14 +2,45 @@
 #include <raylib.h>
 #include <type_traits>
 
-constexpr int windowWidth = 1280;
-constexpr int windowHeight = 800;
+constexpr float windowWidth = 1280;
+constexpr float windowHeight = 800;
+
+template <typename TCallback> struct Ball {
+	Ball(float _x, float _y, float _radius, float _speed_x, float _speed_y, TCallback _callback)
+		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y), OnBallMovedCb(std::move(_callback)) {
+	}
+
+	void Draw() {
+		DrawCircle(x, y, radius, WHITE);
+	}
+
+	void Update() {
+		y += speed_y;
+		x += speed_x;
+
+		if (y + radius >= static_cast<float>(GetScreenHeight()) || y - radius <= 0) {
+			speed_y *= -1;
+		}
+		if (x + radius >= static_cast<float>(GetScreenWidth()) || x - radius <= 0) {
+			speed_x *= -1;
+		}
+
+		OnBallMovedCb(x, y, radius);
+	}
+
+	float radius;
+	float x, y;
+	float speed_x, speed_y;
+
+  private:
+	TCallback OnBallMovedCb;
+};
 
 struct PlayerPaddle {};
 struct PcPaddle {};
 
 template <typename T> struct Paddle {
-	Paddle(int _x, int _y, int _w, int _h, int _speed) : x(_x), y(_y), w(_w), h(_h), speed(_speed) {
+	Paddle(float _x, float _y, float _w, float _h, float _speed) : x(_x), y(_y), w(_w), h(_h), speed(_speed) {
 	}
 
 	void Draw() {
@@ -24,6 +55,7 @@ template <typename T> struct Paddle {
 			if (IsKeyDown(KEY_DOWN))
 				y += speed;
 		} else if constexpr (std::is_same_v<T, PcPaddle>) {
+			// follows center of the ball with the given speed
 			if (y + h / 2 > ball_y)
 				y -= speed;
 			if (y + h / 2 <= ball_y)
@@ -33,51 +65,28 @@ template <typename T> struct Paddle {
 		limitMovement();
 	}
 
-	void Notify(int x, int y) {
+	void Notify(float x, float y, float r) {
 		ball_x = x;
 		ball_y = y;
+		ball_r = r;
 	}
 
+	bool IsHit() {
+		return CheckCollisionCircleRec(Vector2{.x = ball_x, .y = ball_y}, ball_r,
+									   Rectangle{.x = x, .y = y, .width = w, .height = h});
+	}
+
+	float x, y, w, h, speed;
+
   private:
-	int x, y, w, h, speed;
-	int ball_x{}, ball_y{};
+	float ball_x{}, ball_y{}, ball_r{};
 
 	void limitMovement() {
 		if (y <= 0)
 			y = 0;
-		if (y + h >= GetScreenHeight())
-			y = GetScreenHeight() - h;
+		if (y + h >= static_cast<float>(GetScreenHeight()))
+			y = static_cast<float>(GetScreenHeight()) - h;
 	}
-};
-
-template <typename TCallback> struct Ball {
-	Ball(int _x, int _y, float _radius, int _speed_x, int _speed_y, TCallback _callback)
-		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y), OnBallMoved(std::move(_callback)) {
-	}
-
-	void Draw() {
-		DrawCircle(x, y, radius, WHITE);
-	}
-
-	void Update() {
-		y += speed_y;
-		x += speed_x;
-
-		if (y + static_cast<int>(radius) >= GetScreenHeight() || y - static_cast<int>(radius) <= 0) {
-			speed_y *= -1;
-		}
-		if (x + static_cast<int>(radius) >= GetScreenWidth() || x - static_cast<int>(radius) <= 0) {
-			speed_x *= -1;
-		}
-
-		OnBallMoved(x, y);
-	}
-
-  private:
-	float radius;
-	int x, y;
-	int speed_x, speed_y;
-	TCallback OnBallMoved;
 };
 
 auto main() -> int {
@@ -87,8 +96,10 @@ auto main() -> int {
 
 	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
 	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
-	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, [&pcPaddle](int x, int y) {
-		pcPaddle.Notify(x, y); }};
+	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, [&pcPaddle, &playerPaddle](float x, float y, float r) {
+				  pcPaddle.Notify(x, y, r);
+				  playerPaddle.Notify(x, y, r);
+			  }};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
@@ -98,6 +109,10 @@ auto main() -> int {
 		ball.Update();
 		playerPaddle.Update();
 		pcPaddle.Update();
+
+		if (playerPaddle.IsHit() || pcPaddle.IsHit()) {
+			ball.speed_x *= -1;
+		}
 
 		ball.Draw();
 		playerPaddle.Draw();
