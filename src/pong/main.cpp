@@ -16,7 +16,7 @@ template <typename TCallback> struct Ball {
 	}
 
 	void Draw() {
-		DrawCircle(static_cast<int>(m_posX), static_cast<int>(m_posY), m_radius, WHITE);
+		DrawCircleV(Vector2{.x = m_posX, .y = m_posY}, m_radius, WHITE);
 	}
 
 	void Update() {
@@ -54,9 +54,9 @@ template <typename TCallback> struct Ball {
 		m_posX = static_cast<float>(GetScreenWidth()) / 2;
 		m_posY = static_cast<float>(GetScreenHeight()) / 2;
 
-		std::array<int, 2> speedChoices{-1, 1};
-		m_speedX = static_cast<float>(speedChoices.at(GetRandomValue(0, 1)));
-		m_speedY = static_cast<float>(speedChoices.at(GetRandomValue(0, 1)));
+		std::array<int, 2> directions{-1, 1};
+		m_speedX = static_cast<float>(directions.at(GetRandomValue(0, 1)));
+		m_speedY = static_cast<float>(directions.at(GetRandomValue(0, 1)));
 	}
 
   private:
@@ -75,8 +75,7 @@ template <typename T> struct Paddle {
 	}
 
 	void Draw() {
-		DrawRectangle(static_cast<int>(m_posX), static_cast<int>(m_posY), static_cast<int>(m_width),
-					  static_cast<int>(m_height), WHITE);
+		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height}, WHITE);
 	}
 
 	void Update() {
