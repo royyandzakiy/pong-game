@@ -8,13 +8,15 @@ constexpr float windowHeight = 800;
 int cpuScore = 0;
 int playerScore = 0;
 
+template <typename T> struct Paddle;
+
 template <typename TCallback> struct Ball {
 	Ball(float _x, float _y, float _radius, float _speed_x, float _speed_y, TCallback _callback)
 		: radius(_radius), x(_x), y(_y), speed_x(_speed_x), speed_y(_speed_y), OnBallMovedCb(std::move(_callback)) {
 	}
 
 	void Draw() {
-		DrawCircle(x, y, radius, WHITE);
+		DrawCircle(static_cast<int>(x), static_cast<int>(y), radius, WHITE);
 	}
 
 	void Update() {
@@ -35,9 +37,16 @@ template <typename TCallback> struct Ball {
 			ResetBall();
 		}
 
-		// paddle collision
+		OnBallMovedCb(x, y, radius);
+	}
 
-		OnBallMovedCb(x, y, radius); // remove this
+	template <typename TPaddle> void CheckCollide(Paddle<TPaddle> *paddle) {
+		bool isCollide =
+			CheckCollisionCircleRec(Vector2{.x = x, .y = y}, radius,
+									Rectangle{.x = paddle->x, .y = paddle->y, .width = paddle->w, .height = paddle->h});
+		if (isCollide) {
+			speed_x *= -1;
+		}
 	}
 
 	void ResetBall() {
@@ -93,12 +102,6 @@ template <typename T> struct Paddle {
 		ball_r = r;
 	}
 
-	bool IsHit() {
-		// this;should be owned by ball
-		return CheckCollisionCircleRec(Vector2{.x = ball_x, .y = ball_y}, ball_r,
-									   Rectangle{.x = x, .y = y, .width = w, .height = h});
-	}
-
 	float x, y, w, h, speed;
 
   private:
@@ -119,10 +122,13 @@ auto main() -> int {
 
 	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
 	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
-	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7, [&pcPaddle, &playerPaddle](float x, float y, float r) {
-				  pcPaddle.Notify(x, y, r);
-				  playerPaddle.Notify(x, y, r);
-			  }};
+	Ball ball{windowWidth / 2,
+			  windowHeight / 2,
+			  20,
+			  7,
+			  7,
+			  [&pcPaddle](float x, float y, float r) {
+				  pcPaddle.Notify(x, y, r); }};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
@@ -132,10 +138,8 @@ auto main() -> int {
 		ball.Update();
 		playerPaddle.Update();
 		pcPaddle.Update();
-
-		if (playerPaddle.IsHit() || pcPaddle.IsHit()) {
-			ball.speed_x *= -1;
-		}
+		ball.CheckCollide(&pcPaddle);
+		ball.CheckCollide(&playerPaddle);
 
 		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, GREEN);
 		ball.Draw();
