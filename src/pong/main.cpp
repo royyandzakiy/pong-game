@@ -33,8 +33,10 @@ struct Ball {
 
 	~Ball() = default;
 
+	// move ctor/asgn only needs to be defined IF it uses raw pointer. for primitives default is enough
 	Ball(Ball &&other) noexcept = default;
 	Ball &operator=(Ball &&other) noexcept = default;
+
 	Ball(const Ball &other) = delete;
 	Ball &operator=(const Ball &other) = delete;
 
@@ -104,6 +106,7 @@ template <typename T> struct Paddle {
 
 	~Paddle() = default;
 
+	// move ctor/asgn only needs to be defined IF it uses raw pointer. for primitives default is enough
 	Paddle(Paddle &&other) noexcept = default;
 	Paddle &operator=(Paddle &&other) noexcept = default;
 	Paddle(const Paddle &) noexcept = delete;
