@@ -10,9 +10,9 @@ int g_playerScore = 0;
 
 template <typename T> struct Paddle;
 template <typename TCallback> struct Ball {
-	Ball(float _posX, float _posY, float _radius, float _speedX, float _speedY, TCallback _callback)
-		: m_radius(_radius), m_posX(_posX), m_posY(_posY), m_speedX(_speedX), m_speedY(_speedY),
-		  m_onBallMovedCb(std::move(_callback)) {
+	explicit Ball(float posX, float posY, float radius, float speedX, float speedY, TCallback onBallMoveCb)
+		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY),
+		  m_onBallMovedCb(std::move(onBallMoveCb)) {
 	}
 
 	void Draw() {
@@ -70,8 +70,8 @@ struct PlayerPaddle {};
 struct PcPaddle {};
 
 template <typename T> struct Paddle {
-	Paddle(float _posX, float _posY, float _width, float _height, float _speed)
-		: m_posX(_posX), m_posY(_posY), m_width(_width), m_height(_height), m_speed(_speed) {
+	explicit Paddle(float posX, float posY, float width, float height, float speed)
+		: m_posX(posX), m_posY(posY), m_width(width), m_height(height), m_speed(speed) {
 	}
 
 	void Draw() {
