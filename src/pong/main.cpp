@@ -33,18 +33,8 @@ struct Ball {
 
 	~Ball() = default;
 
-	Ball(Ball &&other) noexcept
-		: m_radius(other.m_radius), m_posX(other.m_posX), m_posY(other.m_posY), m_speedX(other.m_speedX),
-		  m_speedY(other.m_speedY), m_onBallMovedCb(std::move(other.m_onBallMovedCb)) {
-		other.m_posX = 0;
-		other.m_posY = 0;
-		other.m_radius = 0;
-		other.m_speedX = 0;
-		other.m_speedY = 0;
-		other.m_onBallMovedCb = nullptr;
-	}
-
-	Ball &operator=(Ball &&other) noexcept = delete;
+	Ball(Ball &&other) noexcept = default;
+	Ball &operator=(Ball &&other) noexcept = default;
 	Ball(const Ball &other) = delete;
 	Ball &operator=(const Ball &other) = delete;
 
@@ -114,16 +104,7 @@ template <typename T> struct Paddle {
 
 	~Paddle() = default;
 
-	Paddle(Paddle &&other) noexcept
-		: m_posX(other.m_posX), m_posY(other.m_posY), m_width(other.m_width), m_height(other.m_height),
-		  m_speed(other.m_speed) {
-		other.m_posX = 0;
-		other.m_posY = 0;
-		other.m_width = 0;
-		other.m_height = 0;
-		other.m_speed = 0;
-	}
-
+	Paddle(Paddle &&other) noexcept = default;
 	Paddle &operator=(Paddle &&other) noexcept = default;
 	Paddle(const Paddle &) noexcept = delete;
 	Paddle &operator=(const Paddle &) noexcept = delete;
@@ -204,8 +185,8 @@ template <typename T, typename U> class Game {
 	}
 
 	// copy & move operator
-	Game(const Game &) noexcept = delete;
-	Game &operator=(const Game &) noexcept = delete;
+	Game(const Game &) noexcept = default;
+	Game &operator=(const Game &) noexcept = default;
 	Game(Game &&) noexcept = delete;
 	Game &operator=(Game &&) noexcept = delete;
 
