@@ -178,8 +178,7 @@ concept PaddleLike = requires(T t) {
 template <typename T, typename U> class Game {
   public:
 	Game(T &&playerPaddle, U &&pcPaddle, Ball ball)
-		: m_playerPaddle(std::forward<T>(playerPaddle)), m_pcPaddle(std::forward<U>(pcPaddle)),
-		  m_ball(std::move(ball)) {
+		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(std::move(ball)) {
 		m_ball.SetCallback([this](float posX, float posY, float radius) { m_pcPaddle.Notify(posX, posY, radius); });
 		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle.data());
 		SetTargetFPS(60);
