@@ -8,6 +8,13 @@ constexpr float windowHeight = 800;
 int g_cpuScore = 0;
 int g_playerScore = 0;
 
+constexpr Color BallColor{230, 247, 0, 255};
+constexpr Color PaddleColor{66, 10, 252, 255};
+constexpr Color BgColor{211, 218, 229, 255};	 // d3dae5
+constexpr Color BgLeftColor{225, 230, 239, 255}; // e1e6ef
+constexpr Color BgCircleColor{255, 255, 255, 255};
+constexpr Color ScoreColor{255, 255, 255, 255};
+
 template <typename T> struct Paddle;
 template <typename TCallback> struct Ball {
 	explicit Ball(float posX, float posY, float radius, float speedX, float speedY, TCallback onBallMoveCb)
@@ -16,7 +23,7 @@ template <typename TCallback> struct Ball {
 	}
 
 	void Draw() {
-		DrawCircleV(Vector2{.x = m_posX, .y = m_posY}, m_radius, WHITE);
+		DrawCircleV(Vector2{.x = m_posX, .y = m_posY}, m_radius, BallColor);
 	}
 
 	void Update() {
@@ -55,8 +62,8 @@ template <typename TCallback> struct Ball {
 		m_posY = static_cast<float>(GetScreenHeight()) / 2;
 
 		std::array<int, 2> directions{-1, 1};
-		m_speedX = static_cast<float>(directions.at(GetRandomValue(0, 1)));
-		m_speedY = static_cast<float>(directions.at(GetRandomValue(0, 1)));
+		m_speedX = 7.0f * static_cast<float>(directions.at(GetRandomValue(0, 1)));
+		m_speedY = 7.0f * static_cast<float>(directions.at(GetRandomValue(0, 1)));
 	}
 
   private:
@@ -75,7 +82,7 @@ template <typename T> struct Paddle {
 	}
 
 	void Draw() {
-		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height}, WHITE);
+		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height}, PaddleColor);
 	}
 
 	void Update() {
@@ -147,21 +154,23 @@ auto main() -> int {
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
-		ClearBackground(BLACK);
+		ClearBackground(BgColor);
 
-		DrawLine(windowWidth / 2, 0, windowWidth / 2, windowHeight, WHITE);
 		ball.Update();
 		playerPaddle.Update();
 		pcPaddle.Update();
 		ball.CheckCollide(&pcPaddle);
 		ball.CheckCollide(&playerPaddle);
 
-		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, GREEN);
+		DrawRectangle(0, 0, windowWidth / 2, windowHeight, BgLeftColor);
+		// DrawLine(windowWidth / 2, 0, windowWidth / 2, windowHeight, WHITE);
+		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, BgCircleColor);
+
 		ball.Draw();
 		playerPaddle.Draw();
 		pcPaddle.Draw();
-		DrawText(TextFormat("%i", g_cpuScore), windowWidth / 4 - 20, 20, 80, WHITE);
-		DrawText(TextFormat("%i", g_playerScore), (windowWidth / 4) * 3 - 20, 20, 80, WHITE);
+		DrawText(TextFormat("%i", g_cpuScore), windowWidth / 4 - 20, 20, 80, ScoreColor);
+		DrawText(TextFormat("%i", g_playerScore), (windowWidth / 4) * 3 - 20, 20, 80, ScoreColor);
 		EndDrawing();
 	}
 
