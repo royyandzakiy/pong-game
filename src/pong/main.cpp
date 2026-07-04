@@ -108,8 +108,35 @@ struct PlayerPaddle {};
 struct PcPaddle {};
 
 template <typename T> struct Paddle {
-	explicit Paddle(float posX, float posY, float width, float height, float speed)
+	Paddle(float posX, float posY, float width, float height, float speed)
 		: m_posX(posX), m_posY(posY), m_width(width), m_height(height), m_speed(speed) {
+	}
+
+	Paddle(Paddle &&other) noexcept
+		: m_posX(other.m_posX), m_posY(other.m_posY), m_width(other.m_width), m_height(other.m_height),
+		  m_speed(other.m_speed) {
+		other.m_posX = 0;
+		other.m_posY = 0;
+		other.m_width = 0;
+		other.m_height = 0;
+		other.m_speed = 0;
+	}
+
+	Paddle &operator=(Paddle &&other) noexcept {
+		if (this != &other) {
+			m_posX = other.m_posX;
+			m_posY = other.m_posY;
+			m_width = other.m_width;
+			m_height = other.m_height;
+			m_speed = other.m_speed;
+
+			other.m_posX = 0;
+			other.m_posY = 0;
+			other.m_width = 0;
+			other.m_height = 0;
+			other.m_speed = 0;
+		}
+		return *this;
 	}
 
 	void Draw() {
