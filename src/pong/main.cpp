@@ -112,6 +112,8 @@ template <typename T> struct Paddle {
 		: m_posX(posX), m_posY(posY), m_width(width), m_height(height), m_speed(speed) {
 	}
 
+	~Paddle() = default;
+
 	Paddle(Paddle &&other) noexcept
 		: m_posX(other.m_posX), m_posY(other.m_posY), m_width(other.m_width), m_height(other.m_height),
 		  m_speed(other.m_speed) {
@@ -122,7 +124,7 @@ template <typename T> struct Paddle {
 		other.m_speed = 0;
 	}
 
-	Paddle &operator=(Paddle &) noexcept = delete;
+	Paddle &operator=(Paddle &&other) noexcept = default;
 	Paddle(const Paddle &) noexcept = delete;
 	Paddle &operator=(const Paddle &) noexcept = delete;
 
