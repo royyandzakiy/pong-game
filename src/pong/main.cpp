@@ -3,12 +3,11 @@
 #include <fmt/base.h>
 #include <functional>
 #include <raylib.h>
-#include <string_view>
 #include <type_traits>
 #include <utility>
 
 namespace GameConfig {
-constexpr std::string_view gameTitle{"Pong Game"};
+constexpr const char *gameTitle{"Pong Game"};
 constexpr float windowWidth{1280};
 constexpr float windowHeight{800};
 }; // namespace GameConfig
@@ -180,7 +179,7 @@ template <typename T, typename U> class Game {
 	Game(T &&playerPaddle, U &&pcPaddle, Ball ball)
 		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(std::move(ball)) {
 		m_ball.SetCallback([this](float posX, float posY, float radius) { m_pcPaddle.Notify(posX, posY, radius); });
-		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle.data());
+		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle);
 		SetTargetFPS(60);
 	}
 
