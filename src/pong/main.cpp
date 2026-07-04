@@ -122,22 +122,9 @@ template <typename T> struct Paddle {
 		other.m_speed = 0;
 	}
 
-	Paddle &operator=(Paddle &&other) noexcept {
-		if (this != &other) {
-			m_posX = other.m_posX;
-			m_posY = other.m_posY;
-			m_width = other.m_width;
-			m_height = other.m_height;
-			m_speed = other.m_speed;
-
-			other.m_posX = 0;
-			other.m_posY = 0;
-			other.m_width = 0;
-			other.m_height = 0;
-			other.m_speed = 0;
-		}
-		return *this;
-	}
+	Paddle &operator=(Paddle &&other) noexcept = delete;
+	Paddle(const Paddle &) noexcept = delete;
+	Paddle &operator=(const Paddle &) noexcept = delete;
 
 	void Draw() {
 		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height}, PaddleColor);
