@@ -189,10 +189,11 @@ template <typename T, typename U> class Game {
 		CloseWindow();
 	}
 
-	Game(Game &&other) noexcept = delete;
-	Game &operator=(Game &&other) noexcept = delete;
-	Game(const Game &&other) noexcept = delete;
-	Game &operator=(const Game &&other) noexcept = delete;
+	// copy & move operator
+	Game(const Game &) noexcept = delete;
+	Game &operator=(const Game &) noexcept = delete;
+	Game(Game &&) noexcept = delete;
+	Game &operator=(Game &&) noexcept = delete;
 
 	void Run() {
 		while (WindowShouldClose() == false) {
