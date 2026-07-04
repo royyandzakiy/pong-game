@@ -1,5 +1,5 @@
 - g_score move to game
-- re add ball move assignment (rule of 3)
+- re add ball padddle game move assignment (rule of5)
 - solve drawtext error
 - use paddle like properly with static assert
   - enable swap player to left/right of screen
