@@ -18,6 +18,7 @@ template <typename TCallback> struct Ball {
 		y += speed_y;
 		x += speed_x;
 
+    // wall collision
 		if (y + radius >= static_cast<float>(GetScreenHeight()) || y - radius <= 0) {
 			speed_y *= -1;
 		}
@@ -25,7 +26,9 @@ template <typename TCallback> struct Ball {
 			speed_x *= -1;
 		}
 
-		OnBallMovedCb(x, y, radius);
+    // paddle collision
+
+		OnBallMovedCb(x, y, radius); // remove this
 	}
 
 	float radius;
@@ -62,6 +65,7 @@ template <typename T> struct Paddle {
 				y += speed;
 		}
 
+    // call this window collision
 		limitMovement();
 	}
 
@@ -72,6 +76,7 @@ template <typename T> struct Paddle {
 	}
 
 	bool IsHit() {
+    // this;should be owned by ball
 		return CheckCollisionCircleRec(Vector2{.x = ball_x, .y = ball_y}, ball_r,
 									   Rectangle{.x = x, .y = y, .width = w, .height = h});
 	}
