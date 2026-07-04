@@ -1,7 +1,10 @@
 #include <array>
+#include <concepts>
 #include <fmt/base.h>
+#include <functional>
 #include <raylib.h>
 #include <type_traits>
+#include <utility>
 
 constexpr float windowWidth = 1280;
 constexpr float windowHeight = 800;
@@ -16,10 +19,54 @@ constexpr Color BgCircleColor{255, 255, 255, 255};
 constexpr Color ScoreColor{255, 255, 255, 255};
 
 template <typename T> struct Paddle;
-template <typename TCallback> struct Ball {
-	explicit Ball(float posX, float posY, float radius, float speedX, float speedY, TCallback onBallMoveCb)
-		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY),
-		  m_onBallMovedCb(std::move(onBallMoveCb)) {
+
+struct Ball {
+	using BallMoveCb = std::function<void(float, float, float)>;
+
+	Ball(float posX, float posY, float radius, float speedX, float speedY)
+		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY) {
+	}
+
+	~Ball() = default;
+
+	Ball(Ball &&other) noexcept
+		: m_radius(other.m_radius), m_posX(other.m_posX), m_posY(other.m_posY), m_speedX(other.m_speedX),
+		  m_speedY(other.m_speedY), m_onBallMovedCb(std::move(other.m_onBallMovedCb)) {
+		other.m_posX = 0;
+		other.m_posY = 0;
+		other.m_radius = 0;
+		other.m_speedX = 0;
+		other.m_speedY = 0;
+		other.m_onBallMovedCb = nullptr;
+	}
+
+	Ball &operator=(Ball &&other) noexcept {
+		if (this != &other) {
+			m_posX = other.m_posX;
+			m_posY = other.m_posY;
+			m_radius = other.m_radius;
+			m_speedX = other.m_speedX;
+			m_speedY = other.m_speedY;
+			m_onBallMovedCb = std::move(other.m_onBallMovedCb);
+
+			other.m_posX = 0;
+			other.m_posY = 0;
+			other.m_radius = 0;
+			other.m_speedX = 0;
+			other.m_speedY = 0;
+			if constexpr (requires { other.m_onBallMovedCb = nullptr; }) {
+				other.m_onBallMovedCb = nullptr;
+			}
+		}
+
+		return *this;
+	}
+
+	Ball(const Ball &other) = delete;
+	Ball &operator=(const Ball &other) = delete;
+
+	void SetCallback(BallMoveCb onBallMoveCb) {
+		m_onBallMovedCb = std::move(onBallMoveCb);
 	}
 
 	void Draw() {
@@ -70,7 +117,7 @@ template <typename TCallback> struct Ball {
 	float m_radius;
 	float m_posX, m_posY;
 	float m_speedX, m_speedY;
-	TCallback m_onBallMovedCb;
+	BallMoveCb m_onBallMovedCb;
 };
 
 struct PlayerPaddle {};
@@ -137,6 +184,31 @@ template <typename T> struct Paddle {
 	}
 };
 
+template <typename T>
+concept PaddleLike = requires(T t) {
+	{ t.Draw() } -> std::same_as<void>;
+};
+
+// todo: move all logic inside this game class
+template <typename T, typename U> class Game {
+  public:
+	Game(T &&playerPaddle, U &&pcPaddle, Ball ball)
+		: m_playerPaddle(std::forward<T>(playerPaddle)), m_pcPaddle(std::forward<U>(pcPaddle)),
+		  m_ball(std::move(ball)) {
+		m_ball.SetCallback([this](float posX, float posY, float radius) { m_pcPaddle.Notify(posX, posY, radius); });
+	}
+
+	void Run();
+
+  private:
+	T m_playerPaddle;
+	U m_pcPaddle;
+	Ball m_ball;
+
+	void Update_prv();
+	void Draw_prv();
+};
+
 auto main() -> int {
 	fmt::println("Hello, clangd + CMake!");
 	InitWindow(windowWidth, windowHeight, "Pong Game!");
@@ -144,13 +216,9 @@ auto main() -> int {
 
 	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
 	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
-	Ball ball{windowWidth / 2,
-			  windowHeight / 2,
-			  20,
-			  7,
-			  7,
-			  [&pcPaddle](float x, float y, float r) {
-				  pcPaddle.Notify(x, y, r); }};
+	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7};
+
+	// Game game{std::move(playerPaddle), std::move(pcPaddle), std::move(ball)};
 
 	while (WindowShouldClose() == false) {
 		BeginDrawing();
@@ -163,7 +231,6 @@ auto main() -> int {
 		ball.CheckCollide(&playerPaddle);
 
 		DrawRectangle(0, 0, windowWidth / 2, windowHeight, BgLeftColor);
-		// DrawLine(windowWidth / 2, 0, windowWidth / 2, windowHeight, WHITE);
 		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, BgCircleColor);
 
 		ball.Draw();
