@@ -90,7 +90,8 @@ struct Ball {
 			ResetBall();
 		}
 
-		m_onBallMovedCb(m_posX, m_posY, m_radius);
+		if (m_onBallMovedCb)
+			m_onBallMovedCb(m_posX, m_posY, m_radius);
 	}
 
 	template <typename TPaddle> void CheckCollide(Paddle<TPaddle> *paddle) {
