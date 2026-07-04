@@ -3,11 +3,16 @@
 #include <fmt/base.h>
 #include <functional>
 #include <raylib.h>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
-constexpr float windowWidth = 1280;
-constexpr float windowHeight = 800;
+namespace GameConfig {
+constexpr std::string_view gameTitle{"Pong Game"};
+constexpr float windowWidth{1280};
+constexpr float windowHeight{800};
+}; // namespace GameConfig
+
 int g_cpuScore = 0;
 int g_playerScore = 0;
 
@@ -40,28 +45,7 @@ struct Ball {
 		other.m_onBallMovedCb = nullptr;
 	}
 
-	Ball &operator=(Ball &&other) noexcept {
-		if (this != &other) {
-			m_posX = other.m_posX;
-			m_posY = other.m_posY;
-			m_radius = other.m_radius;
-			m_speedX = other.m_speedX;
-			m_speedY = other.m_speedY;
-			m_onBallMovedCb = std::move(other.m_onBallMovedCb);
-
-			other.m_posX = 0;
-			other.m_posY = 0;
-			other.m_radius = 0;
-			other.m_speedX = 0;
-			other.m_speedY = 0;
-			if constexpr (requires { other.m_onBallMovedCb = nullptr; }) {
-				other.m_onBallMovedCb = nullptr;
-			}
-		}
-
-		return *this;
-	}
-
+	Ball &operator=(Ball &&other) noexcept = delete;
 	Ball(const Ball &other) = delete;
 	Ball &operator=(const Ball &other) = delete;
 
@@ -197,51 +181,62 @@ template <typename T, typename U> class Game {
 		: m_playerPaddle(std::forward<T>(playerPaddle)), m_pcPaddle(std::forward<U>(pcPaddle)),
 		  m_ball(std::move(ball)) {
 		m_ball.SetCallback([this](float posX, float posY, float radius) { m_pcPaddle.Notify(posX, posY, radius); });
+		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle.data());
+		SetTargetFPS(60);
 	}
 
-	void Run();
+	~Game() {
+		CloseWindow();
+	}
+
+	Game(Game &&other) noexcept = delete;
+	Game &operator=(Game &&other) noexcept = delete;
+	Game(const Game &&other) noexcept = delete;
+	Game &operator=(const Game &&other) noexcept = delete;
+
+	void Run() {
+		while (WindowShouldClose() == false) {
+			BeginDrawing();
+			ClearBackground(BgColor);
+
+			Update_prv();
+			Draw_prv();
+
+			EndDrawing();
+		}
+	}
 
   private:
 	T m_playerPaddle;
 	U m_pcPaddle;
 	Ball m_ball;
 
-	void Update_prv();
-	void Draw_prv();
+	void Update_prv() {
+		m_ball.Update();
+		m_playerPaddle.Update();
+		m_pcPaddle.Update();
+		m_ball.CheckCollide(&m_pcPaddle);
+		m_ball.CheckCollide(&m_playerPaddle);
+	}
+
+	void Draw_prv() {
+		DrawRectangle(0, 0, GameConfig::windowWidth / 2, GameConfig::windowHeight, BgLeftColor);
+		DrawCircle(GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 150.0f, BgCircleColor);
+		DrawText(TextFormat("%i", g_cpuScore), GameConfig::windowWidth / 4 - 20, 20, 80, ScoreColor);
+		DrawText(TextFormat("%i", g_playerScore), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80, ScoreColor);
+
+		m_ball.Draw();
+		m_playerPaddle.Draw();
+		m_pcPaddle.Draw();
+	}
 };
 
 auto main() -> int {
-	fmt::println("Hello, clangd + CMake!");
-	InitWindow(windowWidth, windowHeight, "Pong Game!");
-	SetTargetFPS(60);
+	Paddle<PlayerPaddle> playerPaddle{GameConfig::windowWidth - 35, GameConfig::windowHeight / 2 - 60, 25, 120, 7};
+	Paddle<PcPaddle> pcPaddle{10, GameConfig::windowHeight / 2 - 60, 25, 120, 7};
+	Ball ball{GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 20, 7, 7};
+	Game game{std::move(playerPaddle), std::move(pcPaddle), std::move(ball)};
 
-	Paddle<PlayerPaddle> playerPaddle{windowWidth - 35, windowHeight / 2 - 60, 25, 120, 7};
-	Paddle<PcPaddle> pcPaddle{10, windowHeight / 2 - 60, 25, 120, 7};
-	Ball ball{windowWidth / 2, windowHeight / 2, 20, 7, 7};
-
-	// Game game{std::move(playerPaddle), std::move(pcPaddle), std::move(ball)};
-
-	while (WindowShouldClose() == false) {
-		BeginDrawing();
-		ClearBackground(BgColor);
-
-		ball.Update();
-		playerPaddle.Update();
-		pcPaddle.Update();
-		ball.CheckCollide(&pcPaddle);
-		ball.CheckCollide(&playerPaddle);
-
-		DrawRectangle(0, 0, windowWidth / 2, windowHeight, BgLeftColor);
-		DrawCircle(windowWidth / 2, windowHeight / 2, 150.0f, BgCircleColor);
-
-		ball.Draw();
-		playerPaddle.Draw();
-		pcPaddle.Draw();
-		DrawText(TextFormat("%i", g_cpuScore), windowWidth / 4 - 20, 20, 80, ScoreColor);
-		DrawText(TextFormat("%i", g_playerScore), (windowWidth / 4) * 3 - 20, 20, 80, ScoreColor);
-		EndDrawing();
-	}
-
-	CloseWindow();
+	game.Run();
 	return 0;
 }
