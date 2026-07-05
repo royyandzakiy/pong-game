@@ -33,7 +33,8 @@ class Ball {
 		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY) {
 	}
 
-	~Ball() = default;
+	Ball() = delete;   // remove default ctor
+	~Ball() = default; // use default dtor
 
 	// move ctor, non-const rval (std::move)/asgn only needs to be defined IF it uses raw pointer. for primitives
 	// default is enough
@@ -100,7 +101,8 @@ template <typename T> class Paddle {
 		: m_posX(posX), m_posY(posY), m_width(width), m_height(height), m_speed(speed) {
 	}
 
-	~Paddle() = default;
+	Paddle() = delete;	 // remove default ctor
+	~Paddle() = default; // use default dtor
 
 	// move ctor, non-const rval (std::move)/asgn only needs to be defined IF it uses raw pointer. for primitives
 	// default is enough
@@ -200,6 +202,7 @@ template <typename T, typename U> class Game {
 		SetTargetFPS(60);
 	}
 
+	Game() = delete; // remove default ctor
 	~Game() {
 		CloseWindow();
 	}
@@ -238,10 +241,13 @@ template <typename T, typename U> class Game {
 	}
 
 	void Draw_prv() {
-		DrawRectangle(0, 0, GameConfig::windowWidth / 2, GameConfig::windowHeight, GameColors::BgLeftColor);
-		DrawCircle(GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 150.0f, GameColors::BgCircleColor);
-		DrawText(std::to_string(m_cpuScore).c_str(), GameConfig::windowWidth / 4 - 20, 20, 80, GameColors::ScoreColor);
-		DrawText(std::to_string(m_playerScore).c_str(), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80,
+		DrawRectangle(0, 0, GameConfig::windowWidth / 2, static_cast<int>(GameConfig::windowHeight),
+					  GameColors::BgLeftColor);
+		DrawCircle(static_cast<int>(GameConfig::windowWidth) / 2, static_cast<int>(GameConfig::windowHeight) / 2,
+				   150.0f, GameColors::BgCircleColor);
+		DrawText(std::to_string(m_cpuScore).c_str(), static_cast<int>(GameConfig::windowWidth) / 4 - 20, 20, 80,
+				 GameColors::ScoreColor);
+		DrawText(std::to_string(m_playerScore).c_str(), static_cast<int>(GameConfig::windowWidth) / 4 * 3 - 20, 20, 80,
 				 GameColors::ScoreColor);
 
 		m_ball.Draw();
