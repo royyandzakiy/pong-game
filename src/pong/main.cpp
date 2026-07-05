@@ -22,24 +22,25 @@ constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 } // namespace GameColors
 
-template <typename T> struct Paddle;
+template <typename T> class Paddle;
 template <typename T, typename U> class Game;
 
-struct Ball {
+class Ball {
+  public:
 	using BallMoveCb = std::function<void(float, float, float)>;
 
-	Ball(float posX, float posY, float radius, float speedX, float speedY)
+	explicit Ball(float posX, float posY, float radius, float speedX, float speedY)
 		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY) {
 	}
 
 	~Ball() = default;
 
-	// move ctor/asgn only needs to be defined IF it uses raw pointer. for primitives default is enough
-	Ball(Ball &&other) noexcept = default;
-	Ball &operator=(Ball &&other) noexcept = default;
-
-	Ball(const Ball &other) = delete;
-	Ball &operator=(const Ball &other) = delete;
+	// move ctor, non-const rval (std::move)/asgn only needs to be defined IF it uses raw pointer. for primitives
+	// default is enough
+	Ball(const Ball &other) = delete;				  // copy ctor, const lval
+	Ball &operator=(const Ball &other) = delete;	  // copy assg, const lval
+	Ball(Ball &&other) noexcept = default;			  // move ctor, non-const rval (std::move)
+	Ball &operator=(Ball &&other) noexcept = default; // move assg, non-const rval (std::move)
 
 	void SetCallback(BallMoveCb onBallMoveCb) {
 		m_onBallMovedCb = std::move(onBallMoveCb);
@@ -54,8 +55,8 @@ struct Ball {
 		m_posX += m_speedX;
 
 		// wall collision
-		bool isCollidTopBotWall = m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0;
-		if (isCollidTopBotWall) {
+		bool isCollideTopBotWall = m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0;
+		if (isCollideTopBotWall) {
 			m_speedY *= -1;
 		}
 
@@ -93,18 +94,20 @@ struct Ball {
 struct PlayerPaddle {};
 struct PcPaddle {};
 
-template <typename T> struct Paddle {
-	Paddle(float posX, float posY, float width, float height, float speed)
+template <typename T> class Paddle {
+  public:
+	explicit Paddle(float posX, float posY, float width, float height, float speed)
 		: m_posX(posX), m_posY(posY), m_width(width), m_height(height), m_speed(speed) {
 	}
 
 	~Paddle() = default;
 
-	// move ctor/asgn only needs to be defined IF it uses raw pointer. for primitives default is enough
-	Paddle(Paddle &&other) noexcept = default;
-	Paddle &operator=(Paddle &&other) noexcept = default;
-	Paddle(const Paddle &) noexcept = delete;
-	Paddle &operator=(const Paddle &) noexcept = delete;
+	// move ctor, non-const rval (std::move)/asgn only needs to be defined IF it uses raw pointer. for primitives
+	// default is enough
+	Paddle(const Paddle &) noexcept = delete;			 // copy ctor, const lval
+	Paddle &operator=(const Paddle &) noexcept = delete; // copy assg, const lval
+	Paddle(Paddle &&) noexcept = default;				 // move ctor, non-const rval (std::move)
+	Paddle &operator=(Paddle &&) noexcept = default;	 // move assg, non-const rval (std::move)
 
 	void Draw() {
 		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height},
@@ -181,11 +184,14 @@ template <typename T, typename U> class Game {
 		m_ball.SetCallback([this](float posX, float posY, float radius) {
 			m_pcPaddle.Notify(posX, posY, radius);
 
-			if (posX + radius >= static_cast<float>(GetScreenWidth())) {
+			bool isBallHitRightScreen = posX + radius >= static_cast<float>(GetScreenWidth());
+			bool isBallHitLeftScreen = posX - radius <= 0;
+
+			if (isBallHitRightScreen) {
 				m_cpuScore++;
 				m_ball.ResetBall();
 			}
-			if (posX - radius <= 0) {
+			if (isBallHitLeftScreen) {
 				m_playerScore++;
 				m_ball.ResetBall();
 			}
@@ -199,10 +205,10 @@ template <typename T, typename U> class Game {
 	}
 
 	// copy & move operator
-	Game(const Game &) noexcept = default;
-	Game &operator=(const Game &) noexcept = default;
-	Game(Game &&) noexcept = delete;
-	Game &operator=(Game &&) noexcept = delete;
+	Game(const Game &) noexcept = delete;			 // copy ctor, const lval
+	Game &operator=(const Game &) noexcept = delete; // copy assg, const lval
+	Game(Game &&) noexcept = delete;				 // move ctor, non-const rval (std::move)
+	Game &operator=(Game &&) noexcept = delete;		 // move assg, non-const rval (std::move)
 
 	void Run() {
 		while (WindowShouldClose() == false) {
