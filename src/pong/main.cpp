@@ -3,6 +3,7 @@
 #include <fmt/base.h>
 #include <functional>
 #include <raylib.h>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -227,8 +228,8 @@ template <typename T, typename U> class Game {
 	void Draw_prv() {
 		DrawRectangle(0, 0, GameConfig::windowWidth / 2, GameConfig::windowHeight, GameColors::BgLeftColor);
 		DrawCircle(GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 150.0f, GameColors::BgCircleColor);
-		DrawText(TextFormat("%i", m_cpuScore), GameConfig::windowWidth / 4 - 20, 20, 80, GameColors::ScoreColor);
-		DrawText(TextFormat("%i", m_playerScore), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80,
+		DrawText(std::to_string(m_cpuScore).c_str(), GameConfig::windowWidth / 4 - 20, 20, 80, GameColors::ScoreColor);
+		DrawText(std::to_string(m_playerScore).c_str(), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80,
 				 GameColors::ScoreColor);
 
 		m_ball.Draw();
