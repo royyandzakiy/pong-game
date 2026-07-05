@@ -175,14 +175,9 @@ template <typename T> class Paddle {
 	}
 };
 
-template <typename T>
-concept PaddleLike = requires(T t) {
-	{ t.Draw() } -> std::same_as<void>;
-};
-
 class Game {
   public:
-	Game(Paddle<PlayerPaddle> &&playerPaddle, Paddle<PcPaddle> &&pcPaddle, Ball ball)
+	Game(Paddle<PlayerPaddle> &&playerPaddle, Paddle<PcPaddle> &&pcPaddle, Ball &&ball)
 		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(std::move(ball)) {
 		m_ball.SetCallback([this](float posX, float posY) {
 			m_pcPaddle.Notify(posX, posY);
