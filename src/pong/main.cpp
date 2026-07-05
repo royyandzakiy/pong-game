@@ -12,17 +12,17 @@ constexpr float windowWidth{1280};
 constexpr float windowHeight{800};
 }; // namespace GameConfig
 
-int g_cpuScore = 0;
-int g_playerScore = 0;
-
+namespace GameColors {
 constexpr Color BallColor{.r = 230, .g = 247, .b = 0, .a = 255};
 constexpr Color PaddleColor{.r = 66, .g = 10, .b = 252, .a = 255};
 constexpr Color BgColor{.r = 211, .g = 218, .b = 229, .a = 255};	 // d3dae5
 constexpr Color BgLeftColor{.r = 225, .g = 230, .b = 239, .a = 255}; // e1e6ef
 constexpr Color BgCircleColor{.r = 255, .g = 255, .b = 255, .a = 255};
 constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
+} // namespace GameColors
 
 template <typename T> struct Paddle;
+template <typename T, typename U> class Game;
 
 struct Ball {
 	using BallMoveCb = std::function<void(float, float, float)>;
@@ -45,7 +45,7 @@ struct Ball {
 	}
 
 	void Draw() {
-		DrawCircleV(Vector2{.x = m_posX, .y = m_posY}, m_radius, BallColor);
+		DrawCircleV(Vector2{.x = m_posX, .y = m_posY}, m_radius, GameColors::BallColor);
 	}
 
 	void Update() {
@@ -55,14 +55,6 @@ struct Ball {
 		// wall collision
 		if (m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0) {
 			m_speedY *= -1;
-		}
-		if (m_posX + m_radius >= static_cast<float>(GetScreenWidth())) {
-			g_cpuScore++;
-			ResetBall();
-		}
-		if (m_posX - m_radius <= 0) {
-			g_playerScore++;
-			ResetBall();
 		}
 
 		if (m_onBallMovedCb)
@@ -113,7 +105,8 @@ template <typename T> struct Paddle {
 	Paddle &operator=(const Paddle &) noexcept = delete;
 
 	void Draw() {
-		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height}, PaddleColor);
+		DrawRectangleRec(Rectangle{.x = m_posX, .y = m_posY, .width = m_width, .height = m_height},
+						 GameColors::PaddleColor);
 	}
 
 	void Update() {
@@ -178,7 +171,18 @@ template <typename T, typename U> class Game {
   public:
 	Game(T &&playerPaddle, U &&pcPaddle, Ball ball)
 		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(std::move(ball)) {
-		m_ball.SetCallback([this](float posX, float posY, float radius) { m_pcPaddle.Notify(posX, posY, radius); });
+		m_ball.SetCallback([this](float posX, float posY, float radius) {
+			m_pcPaddle.Notify(posX, posY, radius);
+
+			if (posX + radius >= static_cast<float>(GetScreenWidth())) {
+				m_cpuScore++;
+				m_ball.ResetBall();
+			}
+			if (posX - radius <= 0) {
+				m_playerScore++;
+				m_ball.ResetBall();
+			}
+		});
 		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle);
 		SetTargetFPS(60);
 	}
@@ -196,7 +200,7 @@ template <typename T, typename U> class Game {
 	void Run() {
 		while (WindowShouldClose() == false) {
 			BeginDrawing();
-			ClearBackground(BgColor);
+			ClearBackground(GameColors::BgColor);
 
 			Update_prv();
 			Draw_prv();
@@ -209,6 +213,8 @@ template <typename T, typename U> class Game {
 	T m_playerPaddle;
 	U m_pcPaddle;
 	Ball m_ball;
+	int m_cpuScore{0};
+	int m_playerScore{0};
 
 	void Update_prv() {
 		m_ball.Update();
@@ -219,10 +225,11 @@ template <typename T, typename U> class Game {
 	}
 
 	void Draw_prv() {
-		DrawRectangle(0, 0, GameConfig::windowWidth / 2, GameConfig::windowHeight, BgLeftColor);
-		DrawCircle(GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 150.0f, BgCircleColor);
-		DrawText(TextFormat("%i", g_cpuScore), GameConfig::windowWidth / 4 - 20, 20, 80, ScoreColor);
-		DrawText(TextFormat("%i", g_playerScore), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80, ScoreColor);
+		DrawRectangle(0, 0, GameConfig::windowWidth / 2, GameConfig::windowHeight, GameColors::BgLeftColor);
+		DrawCircle(GameConfig::windowWidth / 2, GameConfig::windowHeight / 2, 150.0f, GameColors::BgCircleColor);
+		DrawText(TextFormat("%i", m_cpuScore), GameConfig::windowWidth / 4 - 20, 20, 80, GameColors::ScoreColor);
+		DrawText(TextFormat("%i", m_playerScore), (GameConfig::windowWidth / 4) * 3 - 20, 20, 80,
+				 GameColors::ScoreColor);
 
 		m_ball.Draw();
 		m_playerPaddle.Draw();
