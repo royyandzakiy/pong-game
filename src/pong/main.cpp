@@ -54,7 +54,8 @@ struct Ball {
 		m_posX += m_speedX;
 
 		// wall collision
-		if (m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0) {
+		bool isCollidTopBotWall = m_posY + m_radius >= static_cast<float>(GetScreenHeight()) || m_posY - m_radius <= 0;
+		if (isCollidTopBotWall) {
 			m_speedY *= -1;
 		}
 
@@ -119,9 +120,11 @@ template <typename T> struct Paddle {
 				m_posY += m_speed;
 		} else if constexpr (std::is_same_v<T, PcPaddle>) {
 			// follows center of the ball with the given speed
-			if (m_posY + m_height / 2 > m_ballPosY)
+			bool isBallGoUp = m_posY + m_height / 2 > m_ballPosY;
+			bool isBallGoDown = m_posY + m_height / 2 <= m_ballPosY;
+			if (isBallGoUp)
 				m_posY -= m_speed;
-			if (m_posY + m_height / 2 <= m_ballPosY)
+			if (isBallGoDown)
 				m_posY += m_speed;
 		}
 
@@ -155,9 +158,12 @@ template <typename T> struct Paddle {
 	float m_ballPosX{}, m_ballPosY{}, m_ballRadius{};
 
 	void WindowCollision() {
-		if (m_posY <= 0)
+		bool isCollideTop = m_posY <= 0;
+		bool isCollideBottom = m_posY + m_height >= static_cast<float>(GetScreenHeight());
+
+		if (isCollideTop)
 			m_posY = 0;
-		if (m_posY + m_height >= static_cast<float>(GetScreenHeight()))
+		if (isCollideBottom)
 			m_posY = static_cast<float>(GetScreenHeight()) - m_height;
 	}
 };
