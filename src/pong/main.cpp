@@ -23,11 +23,10 @@ constexpr Color ScoreColor{.r = 255, .g = 255, .b = 255, .a = 255};
 } // namespace GameColors
 
 template <typename T> class Paddle;
-template <typename T, typename U> class Game;
 
 class Ball {
   public:
-	using BallMoveCb = std::function<void(float, float, float)>;
+	using BallMoveCb = std::function<void(float, float)>;
 
 	explicit Ball(float posX, float posY, float radius, float speedX, float speedY)
 		: m_radius(radius), m_posX(posX), m_posY(posY), m_speedX(speedX), m_speedY(speedY) {
@@ -62,7 +61,7 @@ class Ball {
 		}
 
 		if (m_onBallMovedCb)
-			m_onBallMovedCb(m_posX, m_posY, m_radius);
+			m_onBallMovedCb(m_posX, m_posY);
 	}
 
 	template <typename TPaddle> void CheckCollide(Paddle<TPaddle> *paddle) {
@@ -74,6 +73,10 @@ class Ball {
 		if (isCollide) {
 			m_speedX *= -1;
 		}
+	}
+
+	[[nodiscard]] float getRadius() const {
+		return m_radius;
 	}
 
 	void ResetBall() {
@@ -136,10 +139,9 @@ template <typename T> class Paddle {
 		WindowCollision();
 	}
 
-	void Notify(float posX, float posY, float radius) {
+	void Notify(float posX, float posY) {
 		m_ballPosX = posX;
 		m_ballPosY = posY;
-		m_ballRadius = radius;
 	}
 
 	// Getters
@@ -178,16 +180,15 @@ concept PaddleLike = requires(T t) {
 	{ t.Draw() } -> std::same_as<void>;
 };
 
-// todo: move all logic inside this game class
-template <typename T, typename U> class Game {
+class Game {
   public:
-	Game(T &&playerPaddle, U &&pcPaddle, Ball ball)
+	Game(Paddle<PlayerPaddle> &&playerPaddle, Paddle<PcPaddle> &&pcPaddle, Ball ball)
 		: m_playerPaddle(std::move(playerPaddle)), m_pcPaddle(std::move(pcPaddle)), m_ball(std::move(ball)) {
-		m_ball.SetCallback([this](float posX, float posY, float radius) {
-			m_pcPaddle.Notify(posX, posY, radius);
+		m_ball.SetCallback([this](float posX, float posY) {
+			m_pcPaddle.Notify(posX, posY);
 
-			bool isBallHitRightScreen = posX + radius >= static_cast<float>(GetScreenWidth());
-			bool isBallHitLeftScreen = posX - radius <= 0;
+			bool isBallHitRightScreen = posX + m_ball.getRadius() >= static_cast<float>(GetScreenWidth());
+			bool isBallHitLeftScreen = posX - m_ball.getRadius() <= 0;
 
 			if (isBallHitRightScreen) {
 				m_cpuScore++;
@@ -198,7 +199,8 @@ template <typename T, typename U> class Game {
 				m_ball.ResetBall();
 			}
 		});
-		InitWindow(GameConfig::windowWidth, GameConfig::windowHeight, GameConfig::gameTitle);
+		InitWindow(static_cast<int>(GameConfig::windowWidth), static_cast<int>(GameConfig::windowHeight),
+				   GameConfig::gameTitle);
 		SetTargetFPS(60);
 	}
 
@@ -226,8 +228,8 @@ template <typename T, typename U> class Game {
 	}
 
   private:
-	T m_playerPaddle;
-	U m_pcPaddle;
+	Paddle<PlayerPaddle> m_playerPaddle;
+	Paddle<PcPaddle> m_pcPaddle;
 	Ball m_ball;
 	int m_cpuScore{0};
 	int m_playerScore{0};
@@ -241,7 +243,7 @@ template <typename T, typename U> class Game {
 	}
 
 	void Draw_prv() {
-		DrawRectangle(0, 0, GameConfig::windowWidth / 2, static_cast<int>(GameConfig::windowHeight),
+		DrawRectangle(0, 0, static_cast<int>(GameConfig::windowWidth) / 2, static_cast<int>(GameConfig::windowHeight),
 					  GameColors::BgLeftColor);
 		DrawCircle(static_cast<int>(GameConfig::windowWidth) / 2, static_cast<int>(GameConfig::windowHeight) / 2,
 				   150.0f, GameColors::BgCircleColor);
